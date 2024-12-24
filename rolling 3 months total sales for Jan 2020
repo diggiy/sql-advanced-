@@ -1,0 +1,73 @@
+Q) write a sql to find top 3 products in each category by highest rolling 3 months total sales for Jan 2020.
+
+Sol:--  CREATE TABLE Products (
+    product_id INT PRIMARY KEY,        -- Unique identifier for each product
+    product_name VARCHAR(255) NOT NULL, -- Product name
+    category_id INT,                  -- Foreign key referring to Categories table
+    FOREIGN KEY (category_id) REFERENCES Categories(category_id)
+);
+CREATE TABLE Categories (
+    category_id INT PRIMARY KEY,        -- Unique identifier for each category
+    category_name VARCHAR(255) NOT NULL  -- Category name
+);
+CREATE TABLE Sales (
+    sale_id INT PRIMARY KEY,           -- Unique identifier for each sale
+    product_id INT,                    -- Foreign key referring to Products table
+    sale_date DATE,                    -- The date the sale occurred
+    sale_amount DECIMAL(10, 2),        -- Amount of the sale
+    FOREIGN KEY (product_id) REFERENCES Products(product_id)
+);
+INSERT INTO Categories (category_id, category_name) VALUES
+(1, 'Electronics'),
+(2, 'Clothing'),
+(3, 'Books');
+
+INSERT INTO Products (product_id, product_name, category_id) VALUES
+(1, 'Laptop', 1),
+(2, 'Smartphone', 1),
+(3, 'Headphones', 1),
+(4, 'T-Shirt', 2),
+(5, 'Jeans', 2),
+(6, 'Book A', 3),
+(7, 'Book B', 3);
+
+INSERT INTO Sales (sale_id, product_id, sale_date, sale_amount) VALUES
+(1, 1, '2019-11-15', 1000.00),
+(2, 1, '2019-12-10', 1200.00),
+(3, 1, '2020-01-05', 900.00),
+(4, 2, '2019-11-20', 800.00),
+(5, 2, '2019-12-18', 900.00),
+(6, 2, '2020-01-12', 1000.00),
+(7, 3, '2019-11-25', 150.00),
+(8, 3, '2019-12-05', 200.00),
+(9, 3, '2020-01-10', 180.00),
+(10, 4, '2019-11-28', 50.00),
+(11, 4, '2019-12-15', 60.00),
+(12, 4, '2020-01-08', 70.00),
+(13, 5, '2019-11-12', 70.00),
+(14, 5, '2019-12-22', 80.00),
+(15, 5, '2020-01-17', 90.00),
+(16, 6, '2019-11-03', 30.00),
+(17, 6, '2019-12-13', 40.00),
+(18, 6, '2020-01-25', 50.00),
+(19, 7, '2019-11-08', 25.00),
+(20, 7, '2019-12-02', 30.00),
+(21, 7, '2020-01-14', 35.00);
+
+
+
+
+
+
+code--    
+
+with X_rolling as (select category,product_id,datepart(year,order_date) as yo,datepart(month,order_date) as mo, sum(sales) as sales
+from orders 
+group by category,product_id,datepart(year,order_date),datepart(month,order_date))
+,yyyy as (
+select *,sum(sales) over(partition by category,product_id order by yo,mo rows between 2 preceding and current row ) as roll3_sales
+from X_rolling)
+select * from (
+select *,rank() over(partition by category order by roll3_sales desc) as rn from yyyy 
+where yo=2020 and mo=1) A
+where rn<=3
