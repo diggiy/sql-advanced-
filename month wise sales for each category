@@ -1,0 +1,12 @@
+write a query to find month wise sales for each category for months where sales is more than the combined sales of previous 2 months for that category.
+=========================================================================================================================================================
+sol:---  
+
+with xxx as (select category,datepart(year,order_date) as yo,datepart(month,order_date) as mo, sum(sales) as sales
+from orders 
+group by category,datepart(year,order_date),datepart(month,order_date))
+,yyyy as (
+select *,sum(sales) over(partition by category order by yo,mo rows between 2 preceding and 1 preceding ) as prev2_sales
+from xxx)
+select * from yyyy where  sales>prev2_sales
+
